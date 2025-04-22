@@ -1,0 +1,18 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../facturas/generated"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL_FACTURAS")
+}
+
+model Factura {
+  id        Int      @id @default(autoincrement())
+  usuarioId Int
+  estado    String   // 'Pendiente' | 'Pagado' | 'Vencido'
+  monto     Int
+  emitidaEn DateTime @default(now())
+  pagadaEn  DateTime?
+}
