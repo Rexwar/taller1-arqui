@@ -1,5 +1,5 @@
 // src/modules/database/seederController.js
-const seeder = require('../../database/seeder');
+const seeder = require('./seeder');
 
 const runSeeder = async (req, res) => {
     try {
