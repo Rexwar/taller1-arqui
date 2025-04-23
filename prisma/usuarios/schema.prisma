@@ -19,10 +19,9 @@ model User {
   nombre         String
   apellido       String
   email          String   @unique
-  password_hash  String
   rol            String   @default("Cliente")
   eliminado      Boolean  @default(false)
-  creado_En       DateTime @default(now())
+  creado_En      DateTime @default(now())
 
   @@map("usuarios")
 }

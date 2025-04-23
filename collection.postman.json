@@ -1,0 +1,598 @@
+{
+    "info": {
+      "name": "StreamFlow API",
+      "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+      {
+        "name": "Flujos",
+        "item": [
+          {
+            "name": "Flujo 1 - Listado y Registro",
+            "item": [
+              {
+                "name": "1. Obtener todos los videos",
+                "event": [
+                  {
+                    "listen": "test",
+                    "script": {
+                      "exec": [
+                        "pm.test(\"Status code is 200\", function () {",
+                        "    pm.response.to.have.status(200);",
+                        "});",
+                        "",
+                        "pm.test(\"Response is an array\", function () {",
+                        "    var jsonData = pm.response.json();",
+                        "    pm.expect(jsonData).to.be.an('array');",
+                        "});"
+                      ]
+                    }
+                  }
+                ],
+                "request": {
+                  "method": "GET",
+                  "header": [],
+                  "url": {
+                    "raw": "{{BASE_URL}}/videos",
+                    "host": ["{{BASE_URL}}"],
+                    "path": ["videos"]
+                  }
+                }
+              },
+              {
+                "name": "2. Registrar nuevo usuario",
+                "event": [
+                  {
+                    "listen": "test",
+                    "script": {
+                      "exec": [
+                        "pm.test(\"Status code is 201\", function () {",
+                        "    pm.response.to.have.status(201);",
+                        "});",
+                        "",
+                        "if (pm.response.code === 201) {",
+                        "    var jsonData = pm.response.json();",
+                        "    pm.environment.set(\"newUserEmail\", jsonData.email);",
+                        "}"
+                      ]
+                    }
+                  }
+                ],
+                "request": {
+                  "method": "POST",
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"nombre\": \"Usuario\",\n    \"apellido\": \"Prueba\",\n    \"email\": \"usuario.prueba@test.com\",\n    \"password\": \"password123\",\n    \"confirmPassword\": \"password123\",\n    \"rol\": \"Cliente\"\n}"
+                  },
+                  "url": {
+                    "raw": "{{BASE_URL}}/usuarios",
+                    "host": ["{{BASE_URL}}"],
+                    "path": ["usuarios"]
+                  }
+                }
+              },
+              {
+                "name": "3. Login con nuevo usuario",
+                "event": [
+                  {
+                    "listen": "test",
+                    "script": {
+                      "exec": [
+                        "pm.test(\"Status code is 200\", function () {",
+                        "    pm.response.to.have.status(200);",
+                        "});",
+                        "",
+                        "if (pm.response.code === 200) {",
+                        "    var jsonData = pm.response.json();",
+                        "    pm.environment.set(\"token\", jsonData.token);",
+                        "}"
+                      ]
+                    }
+                  }
+                ],
+                "request": {
+                  "method": "POST",
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"{{newUserEmail}}\",\n    \"password\": \"password123\"\n}"
+                  },
+                  "url": {
+                    "raw": "{{BASE_URL}}/auth/login",
+                    "host": ["{{BASE_URL}}"],
+                    "path": ["auth", "login"]
+                  }
+                }
+              },
+              {
+                "name": "4. Obtener video específico",
+                "event": [
+                  {
+                    "listen": "test",
+                    "script": {
+                      "exec": [
+                        "pm.test(\"Status code is 200\", function () {",
+                        "    pm.response.to.have.status(200);",
+                        "});"
+                      ]
+                    }
+                  }
+                ],
+                "request": {
+                  "method": "GET",
+                  "header": [
+                    {
+                      "key": "Authorization",
+                      "value": "Bearer {{token}}"
+                    }
+                  ],
+                  "url": {
+                    "raw": "{{BASE_URL}}/videos/1",
+                    "host": ["{{BASE_URL}}"],
+                    "path": ["videos", "1"]
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "name": "Flujo 2 - Admin y Facturas",
+            "item": [
+              {
+                "name": "1. Login como admin",
+                "event": [
+                  {
+                    "listen": "test",
+                    "script": {
+                      "exec": [
+                        "if (pm.response.code === 200) {",
+                        "    var jsonData = pm.response.json();",
+                        "    pm.environment.set(\"adminToken\", jsonData.token);",
+                        "}"
+                      ]
+                    }
+                  }
+                ],
+                "request": {
+                  "method": "POST",
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"admin@example.com\",\n    \"password\": \"admin123\"\n}"
+                  },
+                  "url": {
+                    "raw": "{{BASE_URL}}/auth/login",
+                    "host": ["{{BASE_URL}}"],
+                    "path": ["auth", "login"]
+                  }
+                }
+              },
+              {
+                "name": "2. Obtener todas las facturas",
+                "event": [
+                  {
+                    "listen": "test",
+                    "script": {
+                      "exec": [
+                        "if (pm.response.code === 200) {",
+                        "    var jsonData = pm.response.json();",
+                        "    if (jsonData.length > 0) {",
+                        "        pm.environment.set(\"facturaId\", jsonData[0].id);",
+                        "    }",
+                        "}"
+                      ]
+                    }
+                  }
+                ],
+                "request": {
+                  "method": "GET",
+                  "header": [
+                    {
+                      "key": "Authorization",
+                      "value": "Bearer {{adminToken}}"
+                    }
+                  ],
+                  "url": {
+                    "raw": "{{BASE_URL}}/facturas",
+                    "host": ["{{BASE_URL}}"],
+                    "path": ["facturas"]
+                  }
+                }
+              },
+              {
+                "name": "3. Marcar factura como pagada",
+                "request": {
+                  "method": "PATCH",
+                  "header": [
+                    {
+                      "key": "Authorization",
+                      "value": "Bearer {{adminToken}}"
+                    },
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"estado\": \"Pagado\"\n}"
+                  },
+                  "url": {
+                    "raw": "{{BASE_URL}}/facturas/{{facturaId}}",
+                    "host": ["{{BASE_URL}}"],
+                    "path": ["facturas", "{{facturaId}}"]
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "name": "Flujo 3 - Admin y Usuarios",
+            "item": [
+              {
+                "name": "1. Login como admin",
+                "event": [
+                  {
+                    "listen": "test",
+                    "script": {
+                      "exec": [
+                        "if (pm.response.code === 200) {",
+                        "    var jsonData = pm.response.json();",
+                        "    pm.environment.set(\"adminToken\", jsonData.token);",
+                        "}"
+                      ]
+                    }
+                  }
+                ],
+                "request": {
+                  "method": "POST",
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"admin@example.com\",\n    \"password\": \"admin123\"\n}"
+                  },
+                  "url": {
+                    "raw": "{{BASE_URL}}/auth/login",
+                    "host": ["{{BASE_URL}}"],
+                    "path": ["auth", "login"]
+                  }
+                }
+              },
+              {
+                "name": "2. Obtener todos los usuarios",
+                "event": [
+                  {
+                    "listen": "test",
+                    "script": {
+                      "exec": [
+                        "if (pm.response.code === 200) {",
+                        "    var jsonData = pm.response.json();",
+                        "    if (jsonData.length > 0) {",
+                        "        pm.environment.set(\"userToDeleteId\", jsonData[0].id);",
+                        "    }",
+                        "}"
+                      ]
+                    }
+                  }
+                ],
+                "request": {
+                  "method": "GET",
+                  "header": [
+                    {
+                      "key": "Authorization",
+                      "value": "Bearer {{adminToken}}"
+                    }
+                  ],
+                  "url": {
+                    "raw": "{{BASE_URL}}/usuarios",
+                    "host": ["{{BASE_URL}}"],
+                    "path": ["usuarios"]
+                  }
+                }
+              },
+              {
+                "name": "3. Eliminar usuario",
+                "request": {
+                  "method": "DELETE",
+                  "header": [
+                    {
+                      "key": "Authorization",
+                      "value": "Bearer {{adminToken}}"
+                    }
+                  ],
+                  "url": {
+                    "raw": "{{BASE_URL}}/usuarios/{{userToDeleteId}}",
+                    "host": ["{{BASE_URL}}"],
+                    "path": ["usuarios", "{{userToDeleteId}}"]
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "name": "Flujo 4 - Cambio de Contraseña",
+            "item": [
+              {
+                "name": "1. Login como cliente",
+                "event": [
+                  {
+                    "listen": "test",
+                    "script": {
+                      "exec": [
+                        "if (pm.response.code === 200) {",
+                        "    var jsonData = pm.response.json();",
+                        "    pm.environment.set(\"token\", jsonData.token);",
+                        "    pm.environment.set(\"userId\", jsonData.usuario.id);",
+                        "}"
+                      ]
+                    }
+                  }
+                ],
+                "request": {
+                  "method": "POST",
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"{{newUserEmail}}\",\n    \"password\": \"password123\"\n}"
+                  },
+                  "url": {
+                    "raw": "{{BASE_URL}}/auth/login",
+                    "host": ["{{BASE_URL}}"],
+                    "path": ["auth", "login"]
+                  }
+                }
+              },
+              {
+                "name": "2. Cambiar contraseña",
+                "request": {
+                  "method": "PATCH",
+                  "header": [
+                    {
+                      "key": "Authorization",
+                      "value": "Bearer {{token}}"
+                    },
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"currentPassword\": \"password123\",\n    \"newPassword\": \"newPassword123\",\n    \"confirmPassword\": \"newPassword123\"\n}"
+                },
+                "url": {
+                  "raw": "{{BASE_URL}}/auth/usuarios/{{userId}}",
+                  "host": ["{{BASE_URL}}"],
+                  "path": ["auth", "usuarios", "{{userId}}"]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Usuarios",
+      "item": [
+        {
+          "name": "Crear Usuario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nombre\": \"Juan\",\n    \"apellido\": \"Pérez\",\n    \"email\": \"juan@example.com\",\n    \"password\": \"password123\",\n    \"confirmPassword\": \"password123\",\n    \"rol\": \"Cliente\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/usuarios",
+              "host": ["{{BASE_URL}}"],
+              "path": ["usuarios"]
+            }
+          }
+        },
+        {
+          "name": "Obtener Usuario",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/usuarios/{{userId}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["usuarios", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "Actualizar Usuario",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nombre\": \"Juan Carlos\",\n    \"apellido\": \"Pérez\",\n    \"email\": \"juanc@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/usuarios/{{userId}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["usuarios", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "Eliminar Usuario",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/usuarios/{{userId}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["usuarios", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "Listar Usuarios",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/usuarios",
+              "host": ["{{BASE_URL}}"],
+              "path": ["usuarios"],
+              "query": [
+                {
+                  "key": "email",
+                  "value": "juan",
+                  "disabled": true
+                },
+                {
+                  "key": "nombre",
+                  "value": "Juan",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Autenticación",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('token', jsonData.token);",
+                  "    pm.environment.set('userId', jsonData.usuario.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"juan@example.com\",\n    \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/login",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Actualizar Contraseña",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"currentPassword\": \"password123\",\n    \"newPassword\": \"newPassword123\",\n    \"confirmPassword\": \"newPassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/usuarios/{{userId}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "usuarios", "{{userId}}"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ]
+}

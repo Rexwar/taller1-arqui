@@ -1,0 +1,21 @@
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../auth/generated"  // ✅ así generas el cliente aparte
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL_AUTH")
+}
+        
+
+model AuthUsuario {
+  id            String   @id @default(uuid())
+  usuario_email String   @unique
+  password_hash String
+  creado_en     DateTime @default(now())
+  eliminado     Boolean  @default(false)
+
+  @@map("auth_usuarios")  // Nombre real de la tabla en Supabase
+}

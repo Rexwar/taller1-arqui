@@ -1,37 +1,57 @@
-// index.js (o app.js)
+// app.js
 const { config } = require("dotenv");
-const express = require("express");
-const morgan = require("morgan");
-const usersRouter = require("./src/modules/usuarios/usersRoutes");
-// Importa tu instancia de Prisma para la DB de usuarios
-const prismaUsers = require("./src/modules/database/prismaUsuarios");
+const express = require('express');
+const morgan = require('morgan');
+const cors = require('cors');
 
-config({ path: ".env" });
+// Cargar variables de entorno
+config({path: ".env"});
+
+// Importar rutas
+const authRoutes = require('./src/modules/autenticacion/authRoutes');
+const usersRoutes = require('./src/modules/usuarios/usersRoutes');
+// const facturasRoutes = require('./src/modules/facturas/facturasRoutes');
+// const videosRoutes = require('./src/modules/videos/videosRoutes');
 
 const app = express();
-app.use(express.json());
-app.use(morgan("dev"));
-app.use("/users", usersRouter);
 
+/* Middlewares */
+app.use(cors());
+app.use(express.json());
+app.use(morgan('dev'));
+
+/* Rutas */
+// Asegúrate de que las rutas estén definidas correctamente
+app.use('/auth', authRoutes);
+app.use('/usuarios', usersRoutes);
+// app.use('/facturas', facturasRoutes);
+// app.use('/videos', videosRoutes);
+
+// Ruta de health check
 app.get("/", (req, res) => {
-  res.status(200).send("OK");
+  res.status(200).json({
+    status: "success",
+    message: "StreamFlow API is running"
+  });
 });
 
-// Conéctate a la base de datos antes de escuchar
-async function startServer() {
-  try {
-    await prismaUsers.$connect();
-    console.log("✅ Conectado a la base de datos con Prisma");
+// Manejo de rutas no encontradas
+app.use((req, res) => {
+  res.status(404).json({
+    status: "error",
+    message: `Ruta no encontrada: ${req.originalUrl}`
+  });
+});
+// Iniciar servidor
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log('=================================');
+  console.log('🚀 StreamFlow API');
+  console.log('=================================');
+  console.log(`- Puerto:          ${PORT}`);
+  console.log(`- Entorno:         ${process.env.NODE_ENV}`);
+  console.log(`- URL:             http://localhost:${PORT}/`);
+  console.log('=================================');
+});
 
-    const port = process.env.PORT || 3000;
-    app.listen(port, () => {
-      console.log(`🚀 Servidor escuchando en http://localhost:${port}`);
-      console.log(`   • Entorno: ${process.env.NODE_ENV}`);
-    });
-  } catch (error) {
-    console.error("❌ Error al conectar a la base de datos:", error);
-    process.exit(1);
-  }
-}
-
-startServer();
+//module.exports = app;
