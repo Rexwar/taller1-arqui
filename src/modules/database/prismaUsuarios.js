@@ -1,8 +1,27 @@
-const { PrismaClient } = require('../../../prisma/usuarios/generated');
-const prismaUsuarios = globalThis.prismaUsuarios || new PrismaClient();
+// src/modules/database/prismaUsuarios.js
+const { PrismaClient } = require('@prisma/client');
 
-if (process.env.NODE_ENV !== 'production') {
-    globalThis.prismaUsuarios = prismaUsuarios;
+let prismaUsuarios;
+
+if (process.env.NODE_ENV === 'production') {
+  prismaUsuarios = new PrismaClient({
+    datasources: {
+      db: {
+        url: process.env.DATABASE_URL_USUARIOS
+      }
+    }
+  });
+} else {
+  if (!global.prismaUsuarios) {
+    global.prismaUsuarios = new PrismaClient({
+      datasources: {
+        db: {
+          url: process.env.DATABASE_URL_USUARIOS
+        }
+      }
+    });
+  }
+  prismaUsuarios = global.prismaUsuarios;
 }
 
 module.exports = prismaUsuarios;

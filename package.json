@@ -7,17 +7,13 @@
     "start": "node app.js",
     "dev": "nodemon app.js",
     "build": "npm install",
-    "build:render": "npx prisma generate --schema=./prisma/auth/schema.prisma && npx prisma generate --schema=./prisma/usuarios/schema.prisma",
+    "build:render": "npx prisma generate --schema=./prisma/auth/schema.prisma && npx prisma generate --schema=./prisma/usuarios/schema.prisma && npm run copy:prisma",
+    "copy:prisma": "cp -r ./prisma/auth/generated/index.js ./node_modules/.prisma/client/auth.js && cp -r ./prisma/usuarios/generated/index.js ./node_modules/.prisma/client/usuarios.js",
     "generate:auth": "npx prisma generate --schema=./prisma/auth/schema.prisma",
-    "generate:usuarios": "npx prisma generate --schema=./prisma/usuarios/schema.prisma",
-    "seed": "node src/modules/database/seeder.js",
-    "seed:deploy": "node src/database/seeder.js --deploy",
-    "db:cleanup": "node src/database/databaseManager.js cleanup",
-    "db:seed": "node src/database/databaseManager.js seed",
-    "db:reset": "node src/database/databaseManager.js reset"
+    "generate:usuarios": "npx prisma generate --schema=./prisma/usuarios/schema.prisma"
   },
   "dependencies": {
-    "@prisma/client": "^5.9.1",
+    "@prisma/client": "5.22.0",
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
@@ -28,6 +24,6 @@
   "devDependencies": {
     "@faker-js/faker": "^9.7.0",
     "nodemon": "^3.0.3",
-    "prisma": "^5.9.1"
+    "prisma": "5.22.0"
   }
 }
