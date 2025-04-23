@@ -3,18 +3,21 @@
   "version": "1.0.0",
   "description": "API de StreamFlow ",
   "main": "app.js",
- "scripts": {
+  "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js",
-    "build": "npm install && npm run generate:all",
-    "generate:all": "npm run generate:auth && npm run generate:usuarios",
-    "generate:auth": "npx prisma generate --schema=prisma/auth/schema.prisma",
-    "generate:usuarios": "npx prisma generate --schema=prisma/usuarios/schema.prisma",
-    "postinstall": "prisma generate",
-    "build:render": "npm install && npx prisma generate --schema=prisma/auth/schema.prisma && npx prisma generate --schema=prisma/usuarios/schema.prisma"
+    "build": "npm install",
+    "build:render": "npx prisma generate --schema=./prisma/auth/schema.prisma && npx prisma generate --schema=./prisma/usuarios/schema.prisma",
+    "generate:auth": "npx prisma generate --schema=./prisma/auth/schema.prisma",
+    "generate:usuarios": "npx prisma generate --schema=./prisma/usuarios/schema.prisma",
+    "seed": "node src/modules/database/seeder.js",
+    "seed:deploy": "node src/database/seeder.js --deploy",
+    "db:cleanup": "node src/database/databaseManager.js cleanup",
+    "db:seed": "node src/database/databaseManager.js seed",
+    "db:reset": "node src/database/databaseManager.js reset"
   },
   "dependencies": {
-    "@prisma/client": "^6.6.0",
+    "@prisma/client": "^5.9.1",
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
@@ -25,6 +28,6 @@
   "devDependencies": {
     "@faker-js/faker": "^9.7.0",
     "nodemon": "^3.0.3",
-    "prisma": "^6.6.0"
+    "prisma": "^5.9.1"
   }
 }
