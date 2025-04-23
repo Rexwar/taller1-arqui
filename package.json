@@ -3,19 +3,14 @@
   "version": "1.0.0",
   "description": "API de StreamFlow ",
   "main": "app.js",
-  "scripts": {
+ "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js",
     "build": "npm install && npm run generate:all",
     "generate:all": "npm run generate:auth && npm run generate:usuarios",
     "generate:auth": "npx prisma generate --schema=prisma/auth/schema.prisma",
     "generate:usuarios": "npx prisma generate --schema=prisma/usuarios/schema.prisma",
-    "seed": "node src/modules/database/seeder.js",
-    "seed:deploy": "node src/database/seeder.js --deploy",
-    "db:cleanup": "node src/database/databaseManager.js cleanup",
-    "db:seed": "node src/database/databaseManager.js seed",
-    "db:reset": "node src/database/databaseManager.js reset"
-  
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^6.6.0",

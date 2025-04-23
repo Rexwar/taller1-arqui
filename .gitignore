@@ -5,6 +5,8 @@ package-lock.json
 # Archivos de entorno
 .env
 
+# Ignorar clientes Prisma generados
+prisma/**/generated/
 
 
 # Archivos de IDE

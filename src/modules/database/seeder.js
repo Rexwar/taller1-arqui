@@ -6,10 +6,6 @@ const bcrypt = require('bcrypt');
 
 faker.locale = 'es';
 
-// Verificar argumentos
-const isDeployment = process.argv.includes('--deploy');
-const shouldCleanup = process.argv.includes('--cleanup');
-
 const cleanup = async () => {
     try {
         console.log('🧹 Limpiando bases de datos...');
@@ -22,13 +18,14 @@ const cleanup = async () => {
         console.log('✓ Tabla usuarios limpiada');
         
         console.log('✅ Limpieza completada');
+        return { success: true, message: 'Limpieza completada exitosamente' };
     } catch (error) {
         console.error('❌ Error durante la limpieza:', error);
         throw error;
     }
 };
 
-const generateRandomUser = () => {
+const generateRandomUser = (isDeployment) => {
     const roles = ['Cliente', 'Administrador'];
     const firstName = faker.person.firstName();
     const lastName = faker.person.lastName();
@@ -101,11 +98,13 @@ const createTestUsers = async () => {
         }
     ];
 
+    const createdUsers = [];
+
     for (const userData of testUsers) {
         const hashedPassword = await bcrypt.hash(userData.password, 10);
 
         try {
-            await prismaUsuarios.user.create({
+            const user = await prismaUsuarios.user.create({
                 data: {
                     nombre: userData.nombre,
                     apellido: userData.apellido,
@@ -124,6 +123,7 @@ const createTestUsers = async () => {
             console.log('✓ Usuario de prueba creado:', userData.email);
             console.log('  Email:', userData.email);
             console.log('  Contraseña:', userData.password);
+            createdUsers.push(user);
         } catch (error) {
             if (error.code === 'P2002') {
                 console.log('ℹ️ El usuario de prueba ya existe:', userData.email);
@@ -132,9 +132,11 @@ const createTestUsers = async () => {
             }
         }
     }
+
+    return createdUsers;
 };
 
-const seed = async () => {
+const seed = async (isDeployment = false, shouldCleanup = false) => {
     try {
         console.log('🌱 Iniciando proceso de seeding...');
         console.log('Modo:', isDeployment ? 'Despliegue' : 'Desarrollo');
@@ -144,20 +146,23 @@ const seed = async () => {
         }
 
         // Crear usuarios principales
-        await createAdminUser();
+        const adminUser = await createAdminUser();
+        let testUsers = [];
         if (isDeployment) {
-            await createTestUsers();
+            testUsers = await createTestUsers();
         }
 
         // Generar usuarios regulares
         const numUsers = isDeployment ? 10 : faker.number.int({ min: 100, max: 200 });
         console.log(`\nGenerando ${numUsers} usuarios aleatorios...`);
 
+        const createdUsers = [];
         const batchSize = 10;
+        
         for (let i = 0; i < numUsers; i += batchSize) {
             const batch = [];
             for (let j = 0; j < batchSize && (i + j) < numUsers; j++) {
-                const userData = generateRandomUser();
+                const userData = generateRandomUser(isDeployment);
                 const hashedPassword = await bcrypt.hash(userData.password, 10);
 
                 batch.push(async () => {
@@ -184,29 +189,42 @@ const seed = async () => {
             }
 
             // Ejecutar batch
-            await Promise.all(batch.map(fn => fn()));
+            const batchResults = await Promise.all(batch.map(fn => fn()));
+            createdUsers.push(...batchResults);
             console.log(`✓ Procesados ${Math.min(i + batchSize, numUsers)} de ${numUsers} usuarios`);
         }
 
+        const summary = {
+            success: true,
+            totalUsers: numUsers + (adminUser ? 1 : 0) + testUsers.length,
+            adminUser: adminUser ? {
+                email: 'admin@streamflow.com',
+                password: 'Admin123!'
+            } : null,
+            testUsers: isDeployment ? [
+                { email: 'cliente@streamflow.com', password: 'Cliente123!' },
+                { email: 'admin2@streamflow.com', password: 'Admin456!' }
+            ] : [],
+            regularUsers: createdUsers.length
+        };
+
         console.log('\n✅ Seeding completado exitosamente!');
-        console.log('\n📊 Resumen:');
-        console.log(`   - Usuarios creados: ${numUsers + 3} (incluye admin y usuarios de prueba)`);
-        console.log('\n👤 Usuarios de prueba:');
-        console.log('   - Admin Principal: admin@streamflow.com / Admin123!');
-        if (isDeployment) {
-            console.log('   - Admin Secundario: admin2@streamflow.com / Admin456!');
-            console.log('   - Cliente Prueba: cliente@streamflow.com / Cliente123!');
-        }
+        console.log('\n📊 Resumen:', summary);
+
+        return summary;
 
     } catch (error) {
         console.error('\n❌ Error durante el seeding:', error);
         console.error(error.stack);
-        process.exit(1);
+        throw error;
     } finally {
         await prismaUsuarios.$disconnect();
         await prismaAuth.$disconnect();
     }
 };
 
-// Ejecutar el seeder
-seed();
+// Exportar las funciones para uso en API
+module.exports = {
+    seed,
+    cleanup
+};

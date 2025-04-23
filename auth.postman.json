@@ -1,0 +1,139 @@
+{
+    "info": {
+      "_postman_id": "your-generated-id",
+      "name": "StreamFlow - Autenticación",
+      "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+      {
+        "name": "Autenticación",
+        "item": [
+          {
+            "name": "Login",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "if (pm.response.code === 200) {",
+                    "    var jsonData = pm.response.json();",
+                    "    pm.environment.set('token', jsonData.token);",
+                    "    pm.environment.set('userId', jsonData.usuario.id);",
+                    "    pm.environment.set('userRole', jsonData.usuario.rol);",
+                    "}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ],
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"email\": \"juan@example.com\",\n    \"password\": \"password123\"\n}"
+              },
+              "url": {
+                "raw": "{{BASE_URL}}/auth/login",
+                "host": ["{{BASE_URL}}"],
+                "path": ["auth", "login"]
+              }
+            }
+          },
+          {
+            "name": "Login Admin",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "if (pm.response.code === 200) {",
+                    "    var jsonData = pm.response.json();",
+                    "    pm.environment.set('adminToken', jsonData.token);",
+                    "    pm.environment.set('adminId', jsonData.usuario.id);",
+                    "}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ],
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"email\": \"admin@example.com\",\n    \"password\": \"admin123\"\n}"
+              },
+              "url": {
+                "raw": "{{BASE_URL}}/auth/login",
+                "host": ["{{BASE_URL}}"],
+                "path": ["auth", "login"]
+              }
+            }
+          },
+          {
+            "name": "Actualizar Contraseña",
+            "request": {
+              "method": "PATCH",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"currentPassword\": \"password123\",\n    \"newPassword\": \"newPassword123\",\n    \"confirmPassword\": \"newPassword123\"\n}"
+              },
+              "url": {
+                "raw": "{{BASE_URL}}/auth/usuarios/{{userId}}",
+                "host": ["{{BASE_URL}}"],
+                "path": ["auth", "usuarios", "{{userId}}"]
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "event": [
+      {
+        "listen": "prerequest",
+        "script": {
+          "type": "text/javascript",
+          "exec": [
+            ""
+          ]
+        }
+      },
+      {
+        "listen": "test",
+        "script": {
+          "type": "text/javascript",
+          "exec": [
+            ""
+          ]
+        }
+      }
+    ],
+    "variable": [
+      {
+        "key": "BASE_URL",
+        "value": "http://localhost:3000",
+        "type": "string"
+      }
+    ]
+  }

@@ -1,0 +1,175 @@
+{
+    "info": {
+      "_postman_id": "your-generated-id",
+      "name": "StreamFlow - Usuarios",
+      "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+      {
+        "name": "Usuarios",
+        "item": [
+          {
+            "name": "Crear Usuario",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"nombre\": \"Juan\",\n    \"apellido\": \"Pérez\",\n    \"email\": \"juan@example.com\",\n    \"password\": \"password123\",\n    \"confirmPassword\": \"password123\",\n    \"rol\": \"Cliente\"\n}"
+              },
+              "url": {
+                "raw": "{{BASE_URL}}/usuarios",
+                "host": ["{{BASE_URL}}"],
+                "path": ["usuarios"]
+              }
+            }
+          },
+          {
+            "name": "Crear Usuario Admin",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"nombre\": \"Admin\",\n    \"apellido\": \"Principal\",\n    \"email\": \"admin@example.com\",\n    \"password\": \"admin123\",\n    \"confirmPassword\": \"admin123\",\n    \"rol\": \"Administrador\"\n}"
+              },
+              "url": {
+                "raw": "{{BASE_URL}}/usuarios",
+                "host": ["{{BASE_URL}}"],
+                "path": ["usuarios"]
+              }
+            }
+          },
+          {
+            "name": "Obtener Usuario por ID",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{BASE_URL}}/usuarios/1",
+                "host": ["{{BASE_URL}}"],
+                "path": ["usuarios", "1"]
+              }
+            }
+          },
+          {
+            "name": "Actualizar Usuario",
+            "request": {
+              "method": "PATCH",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"nombre\": \"Juan Carlos\",\n    \"apellido\": \"Pérez González\",\n    \"email\": \"juanc@example.com\"\n}"
+              },
+              "url": {
+                "raw": "{{BASE_URL}}/usuarios/1",
+                "host": ["{{BASE_URL}}"],
+                "path": ["usuarios", "1"]
+              }
+            }
+          },
+          {
+            "name": "Eliminar Usuario",
+            "request": {
+              "method": "DELETE",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{BASE_URL}}/usuarios/1",
+                "host": ["{{BASE_URL}}"],
+                "path": ["usuarios", "1"]
+              }
+            }
+          },
+          {
+            "name": "Listar Usuarios",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{BASE_URL}}/usuarios",
+                "host": ["{{BASE_URL}}"],
+                "path": ["usuarios"],
+                "query": [
+                  {
+                    "key": "email",
+                    "value": "juan",
+                    "disabled": true
+                  },
+                  {
+                    "key": "nombre",
+                    "value": "Juan",
+                    "disabled": true
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "event": [
+      {
+        "listen": "prerequest",
+        "script": {
+          "type": "text/javascript",
+          "exec": [
+            ""
+          ]
+        }
+      },
+      {
+        "listen": "test",
+        "script": {
+          "type": "text/javascript",
+          "exec": [
+            ""
+          ]
+        }
+      }
+    ],
+    "variable": [
+      {
+        "key": "BASE_URL",
+        "value": "http://localhost:3000",
+        "type": "string"
+      }
+    ]
+  }
