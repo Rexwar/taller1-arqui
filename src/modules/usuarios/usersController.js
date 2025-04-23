@@ -1,125 +1,228 @@
-const prisma = require('../database/prismaUsuarios');
-const catchAsync = require('../../utils/catchAsync');
+// src/modules/usuarios/usersController.js
+const { PrismaClient: UserPrismaClient } = require('../../../prisma/usuarios/generated');
+const { PrismaClient: AuthPrismaClient } = require('../../../prisma/auth/generated');
 const bcrypt = require('bcrypt');
+const catchAsync = require('../../utils/catchAsync');
 
-// Helper to remove password field from user objects
-function cleanUser(user) {
-  const { password, ...clean } = user;
-  return clean;
-}
+const userPrisma = new UserPrismaClient();
+const authPrisma = new AuthPrismaClient();
 
-// Crear usuario
-const createUser = catchAsync(async (req, res, next) => {
-  const { nombre, apellido, email, password, rol } = req.body;
+// Crear usuario (POST /usuarios)
+const createUser = catchAsync(async (req, res) => {
+    const { nombre, apellido, email, password, confirmPassword, rol } = req.body;
 
-  // Validar rol
-  if (!['Administrador', 'Cliente'].includes(rol)) {
-    return res.status(400).json({ error: 'Rol inválido' });
-  }
+    // Validar que todos los campos requeridos estén presentes
+    if (!nombre || !apellido || !email || !password || !confirmPassword) {
+        return res.status(400).json({ message: 'Todos los campos son requeridos' });
+    }
 
-  // Verificar si el correo ya existe
-  const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) {
-    return res.status(409).json({ error: 'Correo ya registrado' });
-  }
+    // Validar que las contraseñas coincidan
+    if (password !== confirmPassword) {
+        return res.status(400).json({ message: 'Las contraseñas no coinciden' });
+    }
 
-  // Hashear contraseña
-  const hash = await bcrypt.hash(password, 10);
+    // Validar rol
+    if (!['Administrador', 'Cliente'].includes(rol)) {
+        return res.status(400).json({ message: 'Rol inválido' });
+    }
 
-  // Crear usuario
-  const newUser = await prisma.user.create({
-    data: {
-      nombre,
-      apellido,
-      email,
-      password_hash: hash,
-      rol,
-    },
-  });
+    // Si se intenta crear un admin, verificar que quien lo crea sea admin
+    if (rol === 'Administrador') {
+        if (!req.user || req.user.rol !== 'Administrador') {
+            return res.status(403).json({ 
+                message: 'Solo los administradores pueden crear otros administradores' 
+            });
+        }
+    }
 
-  res.status(201).json(cleanUser(newUser));
+    // Verificar si el email ya existe
+    const existingUser = await userPrisma.user.findUnique({
+        where: { email }
+    });
+
+    if (existingUser) {
+        return res.status(400).json({ message: 'El correo electrónico ya está registrado' });
+    }
+
+    // Crear usuario
+    const user = await userPrisma.user.create({
+        data: {
+            nombre,
+            apellido,
+            email,
+            rol: rol || 'Cliente'
+        }
+    });
+
+    // Crear credenciales en auth
+    const hashedPassword = await bcrypt.hash(password, 10);
+    await authPrisma.authUsuario.create({
+        data: {
+            usuario_email: email,
+            password_hash: hashedPassword
+        }
+    });
+
+    // Devolver respuesta sin password
+    res.status(201).json({
+        id: user.id,
+        nombre: user.nombre,
+        apellido: user.apellido,
+        email: user.email,
+        rol: user.rol,
+        creado_En: user.creado_En
+    });
 });
 
-// Obtener todos los usuarios (filtros opcionales)
-const getUsers = catchAsync(async (req, res, next) => {
-  const { nombre, email } = req.query;
+// Obtener usuario por ID (GET /usuarios/:id)
+const getUserById = catchAsync(async (req, res) => {
+    const { id } = req.params;
 
-  // esta consulta valida si el usuario está eliminado o no
-  const users = await prisma.user.findMany({
-    where: {
-      eliminado: false,
-      AND: [
-        nombre
-          ? {
-              OR: [
-                { nombre: { contains: nombre, mode: 'insensitive' } },
-                { apellido: { contains: nombre, mode: 'insensitive' } },
-              ],
+    // Verificar que el usuario existe
+    const user = await userPrisma.user.findFirst({
+        where: {
+            id: parseInt(id),
+            eliminado: false
+        }
+    });
+
+    if (!user) {
+        return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+
+    // Verificar permisos
+    if (req.user.rol !== 'Administrador' && req.user.userId !== parseInt(id)) {
+        return res.status(403).json({ message: 'No autorizado' });
+    }
+
+    res.json(user);
+});
+
+// Actualizar usuario (PATCH /usuarios/:id)
+const updateUser = catchAsync(async (req, res) => {
+    const { id } = req.params;
+    const { nombre, apellido, email } = req.body;
+
+    // Verificar que el usuario existe
+    const user = await userPrisma.user.findFirst({
+        where: {
+            id: parseInt(id),
+            eliminado: false
+        }
+    });
+
+    if (!user) {
+        return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+
+    // Verificar permisos
+    if (req.user.userId !== parseInt(id)) {
+        return res.status(403).json({ message: 'No autorizado' });
+    }
+
+    // Si se intenta modificar la contraseña
+    if (req.body.password) {
+        return res.status(400).json({ 
+            message: 'La contraseña no puede ser modificada aquí. Use el endpoint de actualización de contraseña' 
+        });
+    }
+
+    // Actualizar usuario
+    const updatedUser = await userPrisma.user.update({
+        where: { id: parseInt(id) },
+        data: {
+            nombre: nombre || user.nombre,
+            apellido: apellido || user.apellido,
+            email: email || user.email
+        }
+    });
+
+    res.json(updatedUser);
+});
+
+// Eliminar usuario (DELETE /usuarios/:id)
+const deleteUser = catchAsync(async (req, res) => {
+    const { id } = req.params;
+
+    // Verificar que sea admin
+    if (req.user.rol !== 'Administrador') {
+        return res.status(403).json({ message: 'Solo los administradores pueden eliminar usuarios' });
+    }
+
+    // Verificar que el usuario existe
+    const user = await userPrisma.user.findFirst({
+        where: {
+            id: parseInt(id),
+            eliminado: false
+        }
+    });
+
+    if (!user) {
+        return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+
+    // Soft delete
+    await userPrisma.user.update({
+        where: { id: parseInt(id) },
+        data: { eliminado: true }
+    });
+
+    res.status(204).send();
+});
+
+// Listar usuarios (GET /usuarios)
+const listUsers = catchAsync(async (req, res) => {
+    // Verificar que sea admin
+    if (req.user.rol !== 'Administrador') {
+        return res.status(403).json({ message: 'Solo los administradores pueden listar usuarios' });
+    }
+
+    const { email, nombre } = req.query;
+
+    // Construir filtros
+    const where = {
+        eliminado: false,
+        ...(email && {
+            email: {
+                contains: email
             }
-          : {},
-        email
-          ? { email: { contains: email, mode: 'insensitive' } }
-          : {},
-      ],
-    },
-  });
+        }),
+        ...(nombre && {
+            OR: [
+                {
+                    nombre: {
+                        contains: nombre
+                    }
+                },
+                {
+                    apellido: {
+                        contains: nombre
+                    }
+                }
+            ]
+        })
+    };
 
-  res.status(200).json(users.map(cleanUser));
-});
+    // Obtener usuarios
+    const users = await userPrisma.user.findMany({
+        where,
+        select: {
+            id: true,
+            nombre: true,
+            apellido: true,
+            email: true,
+            rol: true,
+            creado_En: true
+        }
+    });
 
-// Obtener usuario por ID
-const getUserById = catchAsync(async (req, res, next) => {
-  const { id } = req.params;
-
-  const user = await prisma.user.findUnique({ where: { id: Number(id) } });
-  if (!user || user.eliminado) {
-    return res.status(404).json({ error: 'Usuario no encontrado' });
-  }
-
-  res.status(200).json(cleanUser(user));
-});
-
-// Actualizar usuario
-const updateUser = catchAsync(async (req, res, next) => {
-  const { id } = req.params;
-  const { nombre, apellido, email } = req.body;
-
-  // Verificar existencia
-  const user = await prisma.user.findUnique({ where: { id: Number(id) } });
-  if (!user || user.eliminado) {
-    return res.status(404).json({ error: 'Usuario no encontrado' });
-  }
-
-  // Actualizar campos permitidos
-  const updated = await prisma.user.update({
-    where: { id: Number(id) },
-    data: { nombre, apellido, email },
-  });
-
-  res.status(200).json(cleanUser(updated));
-});
-
-// Eliminar usuario (soft delete)
-const deleteUser = catchAsync(async (req, res, next) => {
-  const { id } = req.params;
-
-  const user = await prisma.user.findUnique({ where: { id: Number(id) } });
-  if (!user || user.eliminado) {
-    return res.status(404).json({ error: 'Usuario no encontrado' });
-  }
-
-  await prisma.user.update({
-    where: { id: Number(id) },
-    data: { eliminado: true },
-  });
-
-  res.status(204).send();
+    res.json(users);
 });
 
 module.exports = {
-  createUser,
-  getUsers,
-  getUserById,
-  updateUser,
-  deleteUser,
+    createUser,
+    getUserById,
+    updateUser,
+    deleteUser,
+    listUsers
 };

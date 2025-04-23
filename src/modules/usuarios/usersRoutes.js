@@ -1,28 +1,22 @@
+// src/modules/usuarios/usersRoutes.js
 const express = require('express');
 const router = express.Router();
 const {
-  createUser,
-  getUsers,
-  getUserById,
-  updateUser,
-  deleteUser,
+    createUser,
+    getUserById,
+    updateUser,
+    deleteUser,
+    listUsers
 } = require('./usersController');
+const authenticateToken = require('../../middleware/authenticateToken');
 
-// Rutas para el módulo Usuarios
+// Rutas públicas
+router.post('/', createUser); // Crear usuario no requiere autenticación
 
-// POST   /usuarios         -> Crear un nuevo usuario
-router.post('/', createUser);
-
-// GET    /usuarios         -> Listar todos los usuarios (con filtros opcionales)
-router.get('/', getUsers);
-
-// GET    /usuarios/:id     -> Obtener un usuario por ID
-router.get('/:id', getUserById);
-
-// PATCH  /usuarios/:id     -> Actualizar un usuario existente
-router.patch('/:id', updateUser);
-
-// DELETE /usuarios/:id     -> Eliminar (soft delete) un usuario
-router.delete('/:id', deleteUser);
+// Rutas protegidas
+router.get('/', authenticateToken, listUsers);
+router.get('/:id', authenticateToken, getUserById);
+router.patch('/:id', authenticateToken, updateUser);
+router.delete('/:id', authenticateToken, deleteUser);
 
 module.exports = router;
